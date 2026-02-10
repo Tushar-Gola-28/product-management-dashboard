@@ -65,8 +65,7 @@ self.addEventListener("fetch", (event) => {
     const request = event.request;
     const url = new URL(request.url);
 
-    // Only handle GET requests
-    console.log(request, "request");
+
 
     if (request.method !== "GET") return;
 
@@ -86,35 +85,29 @@ self.addEventListener("fetch", (event) => {
 
     if (isImageRequest) {
         event.respondWith(
-            caches.open(IMAGE_CACHE).then(async (cache) => {
-                const cached = await cache.match(request);
+            caches.open(CACHE_NAME).then(async (cache) => {
+                const cached = await cache.match(event.request);
 
                 if (cached) {
                     event.waitUntil(
-                        fetch(request)
+                        fetch(event.request)
                             .then((fresh) => {
-                                if (fresh && (fresh.status === 200 || fresh.type === "opaque")) {
-                                    cache.put(request, fresh.clone());
-                                }
+                                cache.put(event.request, fresh.clone());
+                                cleanOldEntries(CACHE_NAME);
                             })
                             .catch(() => { })
                     );
-
                     return cached;
                 }
 
-                try {
-                    const response = await fetch(request);
-
-                    if (response && (response.status === 200 || response.type === "opaque")) {
-                        await cache.put(request, response.clone());
-                        limitCacheSize(IMAGE_CACHE, MAX_ITEMS);
-                    }
-
-                    return response;
-                } catch (err) {
-                    return new Response(null, { status: 404 });
-                }
+                // Not cached → fetch + store
+                return fetch(event.request)
+                    .then((response) => {
+                        cache.put(event.request, response.clone());
+                        limitCacheSize(CACHE_NAME, MAX_ITEMS);
+                        return response;
+                    })
+                    .catch(() => new Response(null, { status: 404 }));
             })
         );
 
