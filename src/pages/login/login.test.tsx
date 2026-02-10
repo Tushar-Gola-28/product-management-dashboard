@@ -32,11 +32,12 @@ vi.mock("@tanstack/react-query", () => ({
             mutate: (data: { username: string; password: string }) => {
                 mockMutate(data);
 
-                if (data.username === "success") {
+                if (data.username === "emilys") {
                     options.onSuccess({
                         accessToken: "access-token",
                         refreshToken: "refresh-token",
                         name: "John",
+                        email: "admin@gmail.com",
                         role: "admin",
                     });
                 } else {
@@ -147,10 +148,14 @@ describe("LoginPage Component", () => {
 
         await user.click(screen.getByRole("button", { name: "Login" }));
 
-        expect(localStorage.getItem("accessToken")).toBe("access-token");
-        expect(localStorage.getItem("refreshToken")).toBe("refresh-token");
+        await waitFor(() => {
+            expect(localStorage.getItem("accessToken")).toBe("access-token");
+            expect(localStorage.getItem("refreshToken")).toBe("refresh-token");
+        });
 
-        expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+        });
     });
 
     it("should show API error if login fails", async () => {

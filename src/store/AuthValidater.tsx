@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface UserInterFace {
     id?: string;
@@ -13,7 +13,8 @@ interface AuthState {
     isAuthenticate: boolean;
     user: UserInterFace | null;
     handleAuthenticate: (value: boolean) => void;
-    handleUserInterFaceDetails: (value: UserInterFace) => void;
+    handleUserDetails: (value: UserInterFace) => void;
+    removeUserDetails: () => void;
 }
 
 export const useAuthValidator = create<AuthState>()(
@@ -21,14 +22,16 @@ export const useAuthValidator = create<AuthState>()(
         (set) => ({
             isAuthenticate: false,
             user: null,
+
             handleAuthenticate: (value: boolean) =>
                 set(() => ({ isAuthenticate: value })),
-            handleUserDetails: (value: UserInterFace) =>
-                set(() => ({ user: value })),
+
+            handleUserDetails: (value: UserInterFace) => set(() => ({ user: value })),
+            removeUserDetails: () => set(() => ({ user: null })),
         }),
         {
             name: "auth-storage",
-            getStorage: () => localStorage,
+            storage: createJSONStorage(() => localStorage),
         }
     )
 );

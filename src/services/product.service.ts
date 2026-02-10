@@ -3,6 +3,7 @@ import { api } from "../lib/api-client";
 export type Product = {
     id?: number;
     _id?: string;
+    discountPercentage?: string | number;
     title: string;
     brand?: string;
     category?: string;
@@ -19,9 +20,13 @@ export type ProductsResponse = {
     limit?: number;
     skip?: number;
 };
-
+export type Category = {
+    slug: string;
+    name: string;
+    url: string;
+};
 export async function getCategories() {
-    const res = await api.get<string[]>("/products/categories");
+    const res = await api.get<Category[]>("/products/categories");
     return res.data ?? [];
 }
 

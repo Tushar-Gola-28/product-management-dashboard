@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-
-import { api } from "../../lib/api-client";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
@@ -97,7 +95,7 @@ export function UsersPage() {
             if (search) return searchUsers({ q: search, limit: LIMIT, skip });
             return getUsersPaged({ limit: LIMIT, skip });
         },
-        keepPreviousData: true,
+        placeholderData: keepPreviousData,
     });
 
     const isLoading = usersQuery.isLoading;

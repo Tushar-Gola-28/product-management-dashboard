@@ -23,16 +23,16 @@ import { useAuthValidator, } from "../../store";
 const loginSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().min(6, "Password must be at least 6 characters"),
-    rememberMe: z.boolean().default(false),
+    rememberMe: z.boolean(),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
     const navigate = useNavigate()
     const { handleAuthenticate, handleUserDetails } = useAuthValidator();
     const [showPassword, setShowPassword] = useState(false);
     const [apiError, setApiError] = useState<string | null>(null);
+    type LoginFormValues = z.infer<typeof loginSchema>;
 
     const {
         register,

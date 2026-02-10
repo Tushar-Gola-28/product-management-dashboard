@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
@@ -27,6 +27,7 @@ import {
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { Skeleton } from "../../components/ui/skeleton";
 import { cn, getPageSizeFromSettings, getTableDensityFromSettings } from "../../lib/utils";
+import type { Category } from "../../types/product";
 type SortKey = "title" | "price" | "rating" | "stock";
 type SortDir = "asc" | "desc";
 
@@ -72,7 +73,7 @@ export function ProductPage() {
 
     const skip = (page - 1) * LIMIT;
 
-    const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
         queryKey: ["categories"],
         queryFn: getCategories,
     });
@@ -87,7 +88,7 @@ export function ProductPage() {
             if (category !== "all") return getProductsByCategory({ categoryName: category, limit: LIMIT, skip });
             return getProductsPaged({ limit: LIMIT, skip });
         },
-        keepPreviousData: true,
+        placeholderData: keepPreviousData,
     });
 
     const isLoading = productsQuery.isLoading || categoriesLoading;
@@ -322,7 +323,7 @@ export function ProductPage() {
                                             onChange={(e) => setCategory(e.target.value)}
                                         >
                                             <option value="all">All Categories</option>
-                                            {categories.map((c: { slug: string; name: string; url: string }) => (
+                                            {categories.map((c) => (
                                                 <option key={c.slug} value={c.slug}>
                                                     {c.name}
                                                 </option>

@@ -21,8 +21,6 @@ import {
 } from "../components/ui/sidebar";
 
 import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -60,7 +58,7 @@ export function MainLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { handleAuthenticate, user: safeUser, handleUserDetails } = useAuthValidator();
+    const { handleAuthenticate, user: safeUser, removeUserDetails } = useAuthValidator();
     const user = safeUser as User | null;
     const matches = useMatches();
 
@@ -187,7 +185,7 @@ export function MainLayout() {
         await queryClient.clear();
 
         handleAuthenticate(false);
-        handleUserDetails(null);
+        removeUserDetails();
         navigate("/login", { replace: true });
     };
 

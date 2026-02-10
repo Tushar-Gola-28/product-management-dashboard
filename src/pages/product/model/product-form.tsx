@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -73,7 +73,7 @@ export function ProductForm({
     const [galleryProgress, setGalleryProgress] = useState(0);
 
     const form = useForm<ProductFormValues>({
-        resolver: zodResolver(productSchema),
+        resolver: zodResolver(productSchema) as any,
         defaultValues: {
             title: "",
             description: "",
@@ -95,7 +95,7 @@ export function ProductForm({
         }
     }, [existingThumbnail, existingImages]);
 
-    const { register, handleSubmit, formState } = form;
+    const { register, formState } = form;
     const { errors } = formState;
 
     const { data: categories = [], isLoading: categoryLoading } = useQuery({
@@ -237,7 +237,7 @@ export function ProductForm({
         },
     });
 
-    const onSubmit = async (values: ProductFormValues) => {
+    const onSubmit: SubmitHandler<ProductFormValues> = async (values) => {
         if (!thumbnail) {
             showErrorToast("Thumbnail Required", "Please upload thumbnail image");
             return;
@@ -276,7 +276,7 @@ export function ProductForm({
             </CardHeader>
 
             <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {/* Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {/* Title */}
