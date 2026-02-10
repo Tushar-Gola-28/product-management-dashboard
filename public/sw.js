@@ -75,17 +75,13 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    // ============================
-    // ✅ IMAGE CACHING
-    // stale-while-revalidate
-    // ============================
     const isImageRequest =
         request.destination === "image" ||
         url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
 
     if (isImageRequest) {
         event.respondWith(
-            caches.open(CACHE_NAME).then(async (cache) => {
+            caches.open(IMAGE_CACHE).then(async (cache) => {
                 const cached = await cache.match(event.request);
 
                 if (cached) {
@@ -93,7 +89,7 @@ self.addEventListener("fetch", (event) => {
                         fetch(event.request)
                             .then((fresh) => {
                                 cache.put(event.request, fresh.clone());
-                                cleanOldEntries(CACHE_NAME);
+                                cleanOldEntries(IMAGE_CACHE);
                             })
                             .catch(() => { })
                     );
@@ -104,7 +100,7 @@ self.addEventListener("fetch", (event) => {
                 return fetch(event.request)
                     .then((response) => {
                         cache.put(event.request, response.clone());
-                        limitCacheSize(CACHE_NAME, MAX_ITEMS);
+                        limitCacheSize(IMAGE_CACHE, MAX_ITEMS);
                         return response;
                     })
                     .catch(() => new Response(null, { status: 404 }));
@@ -113,12 +109,6 @@ self.addEventListener("fetch", (event) => {
 
         return;
     }
-
-
-    // ============================
-    // ✅ API CACHING (GET only)
-    // Cache First + Background Update
-    // ============================
 
     const isAPIRequest =
         url.pathname.startsWith("/api") ||
