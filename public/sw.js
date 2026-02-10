@@ -30,8 +30,9 @@ async function cleanOldEntries(cacheName) {
 
     for (const key of keys) {
         const response = await cache.match(key);
+        if (!response) continue;
 
-        const dateHeader = response?.headers?.get("date");
+        const dateHeader = response.headers.get("date");
         if (dateHeader) {
             const age = now - new Date(dateHeader).getTime();
             if (age > CACHE_TTL) {
@@ -49,10 +50,7 @@ self.addEventListener("install", (event) => {
         caches.open(STATIC_CACHE).then((cache) => {
             return cache.addAll([
                 "/",
-                "/index.html",
-                "/offline.html",
-                "/half_logo.svg",
-                "/logo.svg",
+                "/offline.html"
             ]);
         })
     );
@@ -64,24 +62,33 @@ self.addEventListener("install", (event) => {
 // FETCH HANDLER
 // ----------------------------
 self.addEventListener("fetch", (event) => {
-    const url = new URL(event.request.url);
+    const request = event.request;
+    const url = new URL(request.url);
+
+    // Only handle GET requests
+    if (request.method !== "GET") return;
+
+    // 🚫 IMPORTANT: Do not cache JS/CSS module files (prevents MIME error)
+    if (request.destination === "script" || request.destination === "style") {
+        event.respondWith(fetch(request).catch(() => caches.match(request)));
+        return;
+    }
 
     // ============================
     // ✅ IMAGE CACHING
     // stale-while-revalidate
     // ============================
-    if (event.request.destination === "image") {
+    if (request.destination === "image") {
         event.respondWith(
             caches.open(IMAGE_CACHE).then(async (cache) => {
-                const cached = await cache.match(event.request);
+                const cached = await cache.match(request);
 
                 if (cached) {
-                    // Background refresh
                     event.waitUntil(
-                        fetch(event.request)
+                        fetch(request)
                             .then((fresh) => {
                                 if (fresh && fresh.status === 200) {
-                                    cache.put(event.request, fresh.clone());
+                                    cache.put(request, fresh.clone());
                                     cleanOldEntries(IMAGE_CACHE);
                                 }
                             })
@@ -91,11 +98,10 @@ self.addEventListener("fetch", (event) => {
                     return cached;
                 }
 
-                // Not cached → fetch and store
-                return fetch(event.request)
+                return fetch(request)
                     .then((response) => {
                         if (response && response.status === 200) {
-                            cache.put(event.request, response.clone());
+                            cache.put(request, response.clone());
                             limitCacheSize(IMAGE_CACHE, MAX_ITEMS);
                         }
                         return response;
@@ -111,34 +117,37 @@ self.addEventListener("fetch", (event) => {
     // ✅ API CACHING (GET only)
     // Cache First + Background Update
     // ============================
-    if (event.request.method === "GET" && url.origin === self.location.origin || url.origin.includes("dummyjson.com")) {
+
+    const isAPIRequest =
+        url.pathname.startsWith("/api") ||
+        url.pathname.startsWith("/service") ||
+        url.origin.includes("dummyjson.com");
+
+    if (isAPIRequest) {
         event.respondWith(
             caches.open(API_CACHE).then(async (cache) => {
-                const cached = await cache.match(event.request);
+                const cached = await cache.match(request);
 
-                // Try network in background
-                const networkFetch = fetch(event.request)
+                const networkFetch = fetch(request)
                     .then((response) => {
-                        if (response && response.status === 200) {
-                            cache.put(event.request, response.clone());
+                        // cache only JSON response
+                        const type = response.headers.get("content-type") || "";
+                        if (response && response.status === 200 && type.includes("application/json")) {
+                            cache.put(request, response.clone());
                             limitCacheSize(API_CACHE, MAX_ITEMS);
                         }
                         return response;
                     })
                     .catch(() => null);
 
-                // Serve cached first (fast)
                 if (cached) {
                     event.waitUntil(networkFetch);
                     return cached;
                 }
 
-                // No cache, wait for network
                 const fresh = await networkFetch;
-
                 if (fresh) return fresh;
 
-                // Offline fallback
                 return new Response(
                     JSON.stringify({ error: "Offline mode: no cached data available" }),
                     {
@@ -156,17 +165,22 @@ self.addEventListener("fetch", (event) => {
     // ✅ STATIC FILES (HTML pages)
     // Network first fallback to cache
     // ============================
-    if (event.request.mode === "navigate") {
+    if (request.mode === "navigate") {
         event.respondWith(
-            fetch(event.request)
+            fetch(request)
                 .then((response) => {
                     const clone = response.clone();
-                    caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
+
+                    // Store only homepage (not every route)
+                    caches.open(STATIC_CACHE).then((cache) => cache.put("/", clone));
+
                     return response;
                 })
                 .catch(async () => {
                     const cache = await caches.open(STATIC_CACHE);
-                    const cached = await cache.match(event.request);
+
+                    // Try cached homepage
+                    const cached = await cache.match("/");
                     return cached || (await cache.match("/offline.html"));
                 })
         );
@@ -178,10 +192,10 @@ self.addEventListener("fetch", (event) => {
     // Default: Try cache then network
     // ============================
     event.respondWith(
-        caches.match(event.request).then((cached) => {
+        caches.match(request).then((cached) => {
             return (
                 cached ||
-                fetch(event.request).catch(() => new Response("Offline", { status: 503 }))
+                fetch(request).catch(() => new Response("Offline", { status: 503 }))
             );
         })
     );
