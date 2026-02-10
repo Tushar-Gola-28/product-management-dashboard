@@ -35,16 +35,16 @@ export async function getProductsPaged(params: { limit: number; skip: number }) 
     return res.data;
 }
 
-export async function searchProducts(params: { q: string; limit: number; skip: number }) {
+export async function searchProducts(params: { q: string; limit: number; skip: number, signal: AbortSignal }) {
     const res = await api.get<ProductsResponse>(
-        `/products/search?q=${encodeURIComponent(params.q)}&limit=${params.limit}&skip=${params.skip}`
+        `/products/search?q=${encodeURIComponent(params.q)}&limit=${params.limit}&skip=${params.skip}`, { signal: params?.signal }
     );
     return res.data;
 }
 
-export async function getProductsByCategory(params: { categoryName: string; limit: number; skip: number }) {
+export async function getProductsByCategory(params: { categoryName: string; limit: number; skip: number, signal: AbortSignal }) {
     const res = await api.get<ProductsResponse>(
-        `/products/category/${encodeURIComponent(params.categoryName)}?limit=${params.limit}&skip=${params.skip}`
+        `/products/category/${encodeURIComponent(params.categoryName)}?limit=${params.limit}&skip=${params.skip}`, { signal: params?.signal }
     );
     return res.data;
 }

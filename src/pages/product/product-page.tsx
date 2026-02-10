@@ -83,9 +83,9 @@ export function ProductPage() {
 
     const productsQuery = useQuery({
         queryKey,
-        queryFn: async () => {
-            if (search) return searchProducts({ q: search, limit: LIMIT, skip });
-            if (category !== "all") return getProductsByCategory({ categoryName: category, limit: LIMIT, skip });
+        queryFn: async ({ signal }) => {
+            if (search) return searchProducts({ q: search, limit: LIMIT, skip, signal });
+            if (category !== "all") return getProductsByCategory({ categoryName: category, limit: LIMIT, skip, signal });
             return getProductsPaged({ limit: LIMIT, skip });
         },
         placeholderData: keepPreviousData,

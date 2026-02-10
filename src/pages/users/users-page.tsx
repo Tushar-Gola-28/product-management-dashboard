@@ -91,9 +91,9 @@ export function UsersPage() {
 
     const usersQuery = useQuery({
         queryKey: ["users", { page, skip, search }],
-        queryFn: async () => {
-            if (search) return searchUsers({ q: search, limit: LIMIT, skip });
-            return getUsersPaged({ limit: LIMIT, skip });
+        queryFn: async ({ signal }) => {
+            if (search) return searchUsers({ q: search, limit: LIMIT, skip, signal });
+            return getUsersPaged({ limit: LIMIT, skip, signal });
         },
         placeholderData: keepPreviousData,
     });
