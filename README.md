@@ -47,8 +47,8 @@ The goal of this project is to provide a **production-ready admin panel template
 
 ### 3.1 Clone & Install
 ```bash
-git clone <your_repo_url>
-cd <your_project_folder>
+git clone https://github.com/Tushar-Gola-28/product-management-dashboard.git
+cd product-management-dashboard
 npm install
 
 4. Architecture Decisions
@@ -72,9 +72,9 @@ src/
  ├── App.tsx        # App provider wrapper (React Query, Router, Theme)
  ├── main.tsx       # App entry point
 
-![Login Preview](./src/assets/login.png)
-![Dashboard Preview](./src/assets/dashboard.png)
-![Product Preview](./src/assets/product.png)
+![Login Preview](src/assets/login.png)
+![Dashboard Preview](src/assets/dashboard.png)
+![Product Preview](src/assets/product.png)
 
 
 
