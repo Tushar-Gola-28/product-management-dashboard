@@ -51,11 +51,16 @@ git clone https://github.com/Tushar-Gola-28/product-management-dashboard.git
 cd product-management-dashboard
 npm install
 
-4. Architecture Decisions
-4.1 Folder Structure Rationale
+```
+
+## 4. Architecture Decisions
+
+### 4.1 Folder Structure Rationale
+
 
 This project follows a modular and scalable folder structure so that new modules (Orders, Vendors, Reports, etc.) can be added easily without breaking existing code.
 
+```bash
 src/
  ├── assets/        # Images, icons, static resources
  ├── components/    # Reusable UI components (Button, Table, Modal, Sidebar etc.)
@@ -72,11 +77,17 @@ src/
  ├── App.tsx        # App provider wrapper (React Query, Router, Theme)
  ├── main.tsx       # App entry point
 
+
+```
+
+## 📸 Screenshots
+
 ![Login Preview](src/assets/login.png)
 ![Dashboard Preview](src/assets/dashboard.png)
 ![Product Preview](src/assets/product.png)
 
 
 
-✅ AI Tool Usage
+## ✅ AI Tool Usage
+
 "Used ChatGPT for help with UI structure and axios interceptor logic."
