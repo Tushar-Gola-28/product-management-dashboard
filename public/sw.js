@@ -66,6 +66,8 @@ self.addEventListener("fetch", (event) => {
     const url = new URL(request.url);
 
     // Only handle GET requests
+    console.log(request, "request");
+
     if (request.method !== "GET") return;
 
     // 🚫 IMPORTANT: Do not cache JS/CSS module files (prevents MIME error)
@@ -78,7 +80,11 @@ self.addEventListener("fetch", (event) => {
     // ✅ IMAGE CACHING
     // stale-while-revalidate
     // ============================
-    if (request.destination === "image") {
+    const isImageRequest =
+        request.destination === "image" ||
+        url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
+
+    if (isImageRequest) {
         event.respondWith(
             caches.open(IMAGE_CACHE).then(async (cache) => {
                 const cached = await cache.match(request);
@@ -87,9 +93,8 @@ self.addEventListener("fetch", (event) => {
                     event.waitUntil(
                         fetch(request)
                             .then((fresh) => {
-                                if (fresh && fresh.status === 200) {
+                                if (fresh && (fresh.status === 200 || fresh.type === "opaque")) {
                                     cache.put(request, fresh.clone());
-                                    cleanOldEntries(IMAGE_CACHE);
                                 }
                             })
                             .catch(() => { })
@@ -98,20 +103,24 @@ self.addEventListener("fetch", (event) => {
                     return cached;
                 }
 
-                return fetch(request)
-                    .then((response) => {
-                        if (response && response.status === 200) {
-                            cache.put(request, response.clone());
-                            limitCacheSize(IMAGE_CACHE, MAX_ITEMS);
-                        }
-                        return response;
-                    })
-                    .catch(() => new Response(null, { status: 404 }));
+                try {
+                    const response = await fetch(request);
+
+                    if (response && (response.status === 200 || response.type === "opaque")) {
+                        await cache.put(request, response.clone());
+                        limitCacheSize(IMAGE_CACHE, MAX_ITEMS);
+                    }
+
+                    return response;
+                } catch (err) {
+                    return new Response(null, { status: 404 });
+                }
             })
         );
 
         return;
     }
+
 
     // ============================
     // ✅ API CACHING (GET only)
